@@ -1,0 +1,39 @@
+\documentclass[]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\title{Social and Behavioural Networks}
+\author{}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\clearpage
+
+\section{First-Edge algorithm}
+Let $G = (V, E)$ be an undirected graph. We want to infer the structure of $G$ by looking at how information spreads through it.\\We consider information flow to follow a push-pull model. In this model information randomly appears at a source node $s$, at each round the nodes that have the information push it to an uninformed neighbouring node, chosen \textbf{U}niformly \textbf{A}t \textbf{R}andom, the nodes that do not have the information try to pull it from a neighbouring node, chosen UAR.\\If we can track when information appears at each node we can build a trace, that is, an ordered list of pairs $p_i = (v_i, T_i)$ where $T_i \in \mathbb{R}^+$ is the time at which the information first appeared at node $v_i \in V$ and $\forall i,j \, |\, i\neq j  \quad p_i \geq p_j \implies T_i \geq T_j$.
+
+\begin{algorithm}[H]
+	\caption{First-Edge( set of traces: Traces)}
+	\label{alg:first-edge}
+	\begin{algorithmic}
+		\STATE $E \leftarrow \emptyset$
+		\FOR{trace in Traces}
+			\STATE $E\, \cup\!= \{trace[0],\, trace[1]\}$
+		\ENDFOR
+		\RETURN{$E$}
+	\end{algorithmic}
+\end{algorithm}
+
+\section{TODO}
+
+Union Bound\\
+Oct 5th: Chernoff Bound, Chain Letter Petitions, Inference\\
+Oct 9th: Max-Cover, Submodular functions\\
+Oct 12th: Submodular optimization, Submodular Learning\\
+
+\end{document}

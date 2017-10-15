@@ -1,0 +1,9 @@
+# Notes gitignore file
+
+# Ignore all but
+*/**
+
+# these:
+!/socialAndBehaviouralNetworks/SaBN.tex
+!/distributedSystems/DS.tex
+!/machineLearning/ML.tex

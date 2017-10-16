@@ -1,6 +1,7 @@
 \documentclass[]{article}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{amsthm}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 
@@ -28,6 +29,136 @@ Let $G = (V, E)$ be an undirected graph. We want to infer the structure of $G$ b
 		\RETURN{$E$}
 	\end{algorithmic}
 \end{algorithm}
+
+\newtheorem*{FirstEdgeBound}{First-Edge bound}
+\begin{FirstEdgeBound}
+	If $t\geq3n\Delta ln(n)$ (with $\Delta \leq n-1$ being the max degree of the graph) then the First-Edge algorithm is correct with probability $\geq 1-\frac{1}{n}$
+\end{FirstEdgeBound}
+
+\begin{proof}
+	We can compute the probability that an edge $e = \{u, v\}$ will be the first to appear in a trace. Since it's a uniformly distributed random variable \[\Pr\left\{\text{u will be the first node}\right\} = \frac{1}{n}\]. Now we would like to know the probability 
+	\[\Pr\{\underbrace{\text{v will be the second node }}_{v_{second}} | \underbrace{\text{ u is the first node} }_{u_{first}}\}\] 
+	But since we don't know the structure of the graph we can only provide a lower bound:
+	\begin{align*}
+		\Pr&\{v_{second} |\ u_{first} \} = \frac{1}{n} \frac{1}{deg(u)} \geq \frac{1}{n\Delta}
+	\end{align*}
+
+\end{proof}
+
+\section{16-10-17}
+Preferential attachment model: in this evolutionary model nodes get added one by one in the graph. The model starts with one node with an edge to itself. Whenever a node is added it will choose a neighbour in a ``rich-get-richer'' fashion. The probability that a node will be chosen as the neighbour for a new node is equal to \[\Pr\left\{\text{The new node will attach to }v_i\right\} = \frac{Deg(v_i)}{|E|}\]. We claim that the distribution of the degrees of the nodes will follow a power law.\\
+\begin{proof}
+
+Let's call ${{X}^{(t)}}_i = \text{\# nodes of degree } i \text{ in }G_t$. Then we have:
+	\begin{align*}
+		X_2^{(1)} &= 1\\
+		X_t^{(1)} &= 0\, \forall i\neq 2
+	\end{align*}
+	
+	Since:
+	
+		\begin{align*}
+	|V(G_t) &= t\\
+	|E(G_t) &= t\\
+	\sum_{v \in V(G_t)}^{} d_v &= 2t = 2|E(G_t)|
+			\end{align*}
+			
+It follows that:
+
+		\begin{align*}
+			\mathbb{E}\left[X_i^{(t-1)} \middle| \bar{X}^{(t-1)}\right] &=\left(X_i^{(t-1)} + 1\right)\Pr\left\{\parbox{16em}{Node t does not choose a node that used to have degree 1 as its neighbour}\right\} +\\
+			&+ X_1^{(t)} \Pr\left\{\parbox{15em}{Node t chooses a deg-1 neighbour}\right\}\\
+			&= \left(X_1^{(t-1)} + 1\right)\left(1-\frac{X_1^{(t-1)}}{2(t-1)}\right) + X_1^{(t-1)} \frac{X_1^{(t-1)}}{2(t-1)}\\
+			&= X_1^{(t-1)} - \frac{X_1^{(t-1)}}{2(t-1)}) + X_1^{(t-1)} \frac{ X_1^{(t-1)} }{2(t-1)}+1
+		\end{align*}
+PLZ FEDERICO FIX DA EQUATION\\
+
+Now if the equations above don't simplify we're in trouble since all we can say for certain is that: $\mathbb{E}[A+B] = \mathbb{E}[A] + \mathbb{E}[B]$ (linearity of the expected value) but not necessarily $\mathbb{E}[A^2+B^2] = \mathbb{E}[A]^2 + \mathbb{E}[B]^2$.\\
+
+
+\begin{align*}
+	\mathbb{E}\left[X_1^{(t)} \right] &= \sum_{c\geq0}^{}\left( \Pr\left\{ X_1^{(t-1)} = c \right\} \mathbb{E}\left[ X_1^{(t)} \middle| X_1^{(t-1)} = c \right] \right)\\
+	&= \sum_{c\geq0}^{}\left( \Pr\left\{ X_1^{(t-1)} = c \right\}\left( \left( 1 - \frac{1}{2(t-1)} \right)c + 1 \right) \right)\\
+	&= \sum_{c\geq0}^{}\left( \Pr\left\{ X_1^{(t-1)} = c \right\}\left( \left( 1 - \frac{1}{2(t-1)} \right)c\right) \right) + \underbrace{\sum_{c\geq0}^{}\left( \Pr\left\{ X_1^{(t-1)} = c \right\} \right)}_\text{1}\\
+	&= \left( 1 - \frac{1}{2(t-1)}\right) \sum_{c\geq0}^{}\left( \Pr\left\{ X_1^{(t-1)} = c \right\}c \right) + 1\\
+	&= \left( 1 - \frac{1}{2(t-1)}\right)+ 	\mathbb{E}\left[X_1^{(t-1)} \right] + 1\\
+\end{align*}
+
+\paragraph{Lemma 1}
+\begin{align*}
+\mathbb{E}\left[X_1^{(t)} \right] &= \left( 1 - \frac{1}{2(t-1)}\right)\mathbb{E}\left[X_1^{(t-1)} \right] + 1\\
+\end{align*}
+
+\paragraph{Lemma 2}
+\begin{align*}
+\mathbb{E}\left[X_i^{(t)} \right] &= \left( 1 - \frac{i}{2(t-1)}\right)\mathbb{E}\left[X_i^{(t-1)} \right] + \left(\frac{i-1}{2(t-1)}\right)\mathbb{E}\left[X_{i-1}^{(t-1)} \right]\\
+\end{align*}
+
+Let us consider $\forall i \geq 2$
+\begingroup
+\addtolength{\jot}{1em}
+\begin{align*}
+	\mathbb{E}\left[X_i^{(t-1)} \middle| \bar{X}^{(t-1)}\right] &= X_i^{(t-1)} + \Pr\left\{ X_i^{(t)} - X_i^{(t-1)} = 1\right\} - \Pr\left\{ X_i^{(t)} - X_i^{(t-1)} = -1\right\}\\
+	&= X_i^{(t-1)} + \left( \frac{i-1}{2(t-1)}\right) X_{i-1}^{(t-1)} - \left(\frac{1}{2(t-1)}\right) X_{i}^{(t-1)}\\
+	&= \left(1- \frac{i}{2(t-1)}\right) X_{i}^{(t-1)} + \left( \frac{i-1}{2(t-1)}\right) X_{i-1}^{(t-1)}\\
+	&= \mathbb{E}\left[X_i^{(t)} \middle| X_i^{(t-1)},\,  X_{i-1}^{(t-1)}\right]
+\end{align*}
+\endgroup
+
+
+\begingroup
+\addtolength{\jot}{1em}
+\begin{align*}
+\mathbb{E}\left[X_i^{(t)} \right] &= \sum_{\substack{c \geq 0 \\ d \geq 0}}^{} \left( \Pr\left\{  X_i^{(t-1)} = c \wedge X_{i-1}^{(t-1)} = d \right\} \mathbb{E}\left[X_i^{(t)} \middle| X_i^{(t-1)} = c,\,  X_{i-1}^{(t-1)} = d\right] \right)\\
+&= \sum_{\substack{c \geq 0 \\ d \geq 0}}^{} \left( \Pr\left\{  X_i^{(t-1)} = c \wedge X_{i-1}^{(t-1)} = d \right\} \left( \left(1- \frac{i}{2(t-1)}\right)c + \left( \frac{i-1}{2(t-1)}\right)d\right)\right)\\
+&=  \sum_{\substack{c \geq 0 \\ d \geq 0}}^{} \left( \Pr\left\{  X_i^{(t-1)} = c \wedge X_{i-1}^{(t-1)} = d \right\} \left(1- \frac{i}{2(t-1)}\right)c\right)\\ &+  \sum_{\substack{c \geq 0 \\ d \geq 0}}^{} \left( \Pr\left\{  X_i^{(t-1)} = c \wedge X_{i-1}^{(t-1)} = d \right\}\left( \frac{i-1}{2(t-1)}\right)d \right)\\&=  \sum_{\substack{c \geq 0 \\ d \geq 0}}^{} \left( \Pr\left\{  X_i^{(t-1)} = c \right\} \left(1- \frac{i}{2(t-1)}\right)c\right)\\ &+  \sum_{\substack{c \geq 0 \\ d \geq 0}}^{} \left( \Pr\left\{ X_{i-1}^{(t-1)} = d \right\}\left( \frac{i-1}{2(t-1)}\right)d \right)\\
+&= \left( 1 - \frac{i}{2(t-1)}\right)\mathbb{E}\left[X_i^{(t-1)} \right] + \left(\frac{i-1}{2(t-1)}\right)\mathbb{E}\left[X_{i-1}^{(t-1)} \right]\\
+\end{align*}
+\endgroup
+
+We want to prove that $\mathbb{E}\left[X_i^{(t)} \right] \approx i^{-\alpha} t$. However, we will not actually attempt to come up with a function that satisfies our equations, we'll just be providing one and verify that it is indeed a solution. So we state that:
+\[
+	E_i = \frac{4}{i(i+1)(i+2)}
+\]
+is a solution for the recursive equations above. We can ``easily'' verify that:
+\[
+	E_i t - 1\leq \mathbb{E}\left[X_i^{(t)}\right] \leq E_i t + 1
+\] 
+
+by double induction, first on the degree $i$ of each node and then on the time step $t$ of our algorithm.
+
+\begingroup
+\addtolength{\jot}{1em}
+\begin{align*}
+\text{For }t = 1 \text{ we have:}&\ 0\leq \mathbb{E}\left[X_i^{(t)} \right] \leq 1\ \text{true}\\
+\text{For }i = 1 \text{ we have:}&\ \mathbb{E}\left[X_1^{(t)} \right] =  \left( 1 - \frac{1}{2(t-1)}\right)\mathbb{E}\left[X_1^{(t-1)} \right] + 1\\
+&\leq \left( 1 - \frac{1}{2(t-1)}\right)\left(\frac{4}{1\cdot2\cdot3}(t-1)+1\right) + 1\\
+&= \left( 1 - \frac{1}{2(t-1)}\right)\left(\frac{2}{3}(t-1)+1\right) + 1\\
+&= \frac{2}{3}(t-1) - \frac{2}{3}\frac{t-1}{2(t-1)} + 1 - \frac{1}{2(t-1)} + 1\\
+&= \frac{2}{3}(t-1) + \left(1- \frac{1}{3}\right) + \left(1 - \frac{1}{2(t-1)}\right)\\
+&= \frac{2}{3}t + \left(1 - \frac{1}{2(t-1)}\right)\\
+&\leq \frac{2}{3}t  + 1\\
+&= E_i t + 1\\
+\end{align*}
+\endgroup
+
+Now that we're proved the base cases we can go for the general case:
+
+\begingroup
+\addtolength{\jot}{1em}
+\begin{align*}
+\mathbb{E}\left[X_i^{(t)} \right] &=  \left( 1 - \frac{i}{2(t-1)}\right)\mathbb{E}\left[X_i^{(t-1)} \right] + \left(\frac{i-1}{2(t-1)}\right)\mathbb{E}\left[X_{i-1}^{(t-1)} \right]\\
+&\leq \left( 1 - \frac{i}{2(t-1)}\right)\left(E_i (t-1) + 1\right) + \left(\frac{i-1}{2(t-1)}\right)\left(E_{i-1} (t-1) + 1\right)\\
+&= \left( 1 - \frac{i}{2(t-1)}\right)\left(\frac{4}{(i)(i+1)(i+2)} (t-1) + 1\right) + \left(\frac{i-1}{2(t-1)}\right)\left(\frac{4}{(i-1)(i)(i+1)} (t-1) + 1\right)\\ 
+&= \frac{4(t-1)}{(i)(i+1)(i+2)} + 1 - \frac{2}{(i+1)(i+2)} - \frac{i}{2(t-1)} + \frac{2}{(i)(i+1)} + \frac{i-1}{2(t-1)}\\
+&= \frac{4(t-1)}{(i)(i+1)(i+2)} + \frac{2}{i+1}\left(\frac{1}{i} - \frac{1}{i+2}\right) - \frac{i}{2(t-1)} \\
+&= \frac{4(t-1)}{(i)(i+1)(i+2)} + \frac{2}{i+1}\left(\frac{i+2}{i(i+2)} - \frac{i}{i(i+2)}\right) - \frac{i}{2(t-1)}\\
+&= \frac{4(t-1)}{(i)(i+1)(i+2)} + \frac{4}{(i)(i+1)(i+2)} - \frac{i}{2(t-1)}\\
+&= \frac{4(t-1) - 4}{(i)(i+1)(i+2)} - \frac{i}{2(t-1)}\\
+&= \frac{4(t-2)}{(i)(i+1)(i+2)} - \underbrace{\frac{i}{2(t-1)}}_{\geq 0} \leq \frac{4t}{(i)(i+1)(i+2)} + 1\\
+\end{align*}
+\endgroup
+\end{proof}
 
 \section{TODO}
 

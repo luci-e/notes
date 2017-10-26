@@ -3,6 +3,7 @@
 \usepackage{amssymb}
 \usepackage{algorithm}
 \usepackage{algorithmic}
+\usepackage{mathrsfs}
 
 \title{Distributed Systems}
 \author{}
@@ -11,5 +12,81 @@
 
 \maketitle
 
+\section{17-10-17}
+
+\begin{align*}
+	(\mathscr{H}, \rightarrow)\\
+	&\Theta(e) =\left\{e'\in H |\ e'\rightarrow e  \right\} \cup \{e\}\\
+	&\Theta_i(e) = h_i(e)\\
+	&\Theta(e) = h_1(e) \cup \dots \cup h_n(e)
+\end{align*}
+
+Recall that
+
+\begin{align*}
+&e, e' \ e\rightarrow e'\quad \Theta(e) \subset \Theta(e')\\
+&\text{Vector clock}\; VC(e)[x, y, z]\\
+&VC(e) = \overbrace{[0 \dots 0]}^{n}\\
+&\forall i:&\\
+&VC(e)[i] = VC(e)[i] + 1\; &\text{internal send}\\
+&\left.\begin{array}{l}
+VC(e) = max\{VC(e), TS(m)\} + 1\\
+VC(e)[i] = VC(e)[i] + 1
+\end{array}
+\right\rbrace & \text{e = receive(m)}
+\end{align*}
+
+We can define an ordering for the vector clock:
+\[
+V < V' \equiv (V \neq V') \wedge (\forall k: 1 \leq k \leq n | V[k] \leq V'[k])\\
+\]
+
+Strong clock condition:
+\[
+e \rightarrow e' \equiv VC(e) < VC(e')
+\]
+
+Simple s.c. condition:
+\begin{align*}
+\text{Given }&e_i \text{ of }p_i \text{ and } e_j \text{ of }p_j\\
+&e_i \rightarrow e_j \equiv VC(e_i)[i] \leq VC(e_j)[i]
+\end{align*}
+
+Two events are concurrent:
+\begin{align*}
+\text{Given }&e_i \text{ of }p_i \text{ and } e_j \text{ of }p_j\\
+&e_i \parallel e_j \equiv \left((VC(e_i)[i] > VC(e_j)[i]\right) \wedge \left((VC(e_j)[j] > VC(e_i)[j]\right)
+\end{align*}
+
+Pairwise inconsistent events:
+\begin{align*}
+\text{Given }&e_i \text{ of }p_i \text{ and } e_j \text{ of }p_j\\
+&\left((VC(e_i)[i] < VC(e_j)[i]\right) \vee \left((VC(e_j)[j] < VC(e_i)[j]\right)
+\end{align*}
+
+Consistent cut $C(c_1, \dots , c_n)$:
+\begin{align*}
+\forall i,j &\; i\leq i,j \leq n\\
+&VC(e_i^{c_i})[i] \geq VC(e_i^{c_j})[i]
+\end{align*}
+
+Counting:
+\begin{align*}
+\text{Given }&e_i \text{ of }p_i\\
+\#(e_i) &= \left(\sum_{i=1}^{n}VC(e_i)[j]\right) -1 
+\end{align*}
+
+Weak cat detection:
+\begin{algorithm}[H]
+\caption{WeakGapDetect( vector clock: V)}
+\label{alg:weakGap}
+\begin{algorithmic}
+\STATE Give $e_i$ of $p_i$ and $e_j$ of $p_j$
+\IF{$VC(e_i)[k] < VC(e_j)[k] \wedge k\neq j$}
+	\STATE $\exists\ e_k\ |\ \neg (e_k \rightarrow e_i) \wedge (e_k \rightarrow e_j)$
+\ENDIF
+\RETURN{$E$}
+\end{algorithmic}
+\end{algorithm}
 
 \end{document}

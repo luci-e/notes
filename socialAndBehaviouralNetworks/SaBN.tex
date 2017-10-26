@@ -2,6 +2,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{mathrsfs}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 
@@ -36,14 +37,133 @@ Let $G = (V, E)$ be an undirected graph. We want to infer the structure of $G$ b
 \end{FirstEdgeBound}
 
 \begin{proof}
-	We can compute the probability that an edge $e = \{u, v\}$ will be the first to appear in a trace. Since it's a uniformly distributed random variable \[\Pr\left\{\text{u will be the first node}\right\} = \frac{1}{n}\]. Now we would like to know the probability 
+	We can compute the probability that an edge $e = \{u, v\}$ will be the first to appear in a trace. Since it's a uniformly distributed random variable: \[\Pr\left\{\text{u will be the first node}\right\} = \frac{1}{n}\] Now we would like to know the probability 
 	\[\Pr\{\underbrace{\text{v will be the second node }}_{v_{second}} | \underbrace{\text{ u is the first node} }_{u_{first}}\}\] 
 	But since we don't know the structure of the graph we can only provide a lower bound:
 	\begin{align*}
-		\Pr&\{v_{second} |\ u_{first} \} = \frac{1}{n} \frac{1}{deg(u)} \geq \frac{1}{n\Delta}
+		\Pr&\{v_{second} |\ u_{first} \} = \frac{1}{n} \frac{1}{deg(u)} \geq \frac{1}{n\Delta}\\
+		\Pr&\{\text{At least one of our } T \text{ traces begin with }u, v\}\\
+		&= 1 - \Pr\{\text{None of our traces begin with }u, v\}\\
+		&= 1- \left(1-\frac{1}{n\Delta}\right)t\\
 	\end{align*}
+	
+	
+Let's go back to our original statement:
+\[	\Pr\{\text{A random trace does not begin with }u, v\} \leq 1 -\frac{1}{n\Delta}	\]
+	
+	\begingroup
+	\addtolength{\jot}{1em}
+	\begin{align*}
+		\left(1 -\frac{1}{n\Delta}\right)^t &\leq \left(1 -\frac{1}{n\Delta}\right)^{3n\Delta ln(n)}\\
+		&\leq \left(e^{-\frac{1}{n\Delta}}\right)^{3n\Delta ln(n)} = e^{-3nln(n)} = \frac{1}{n^3}
+	\end{align*}
+	\endgroup
+	
+\paragraph{Union bound lemma}
+The probability of the union is $\leq$ the probability of the sum of the events:
+\begin{align*}
+\Pr\left(\bigcup_{e=1}^{t} \xi_e\right) \leq \sum_{e_i}^{t}\Pr\{\xi_e\}\\
+\end{align*}	
 
+Thus we have that:
+\begin{align*}
+	&\forall \{a,b\} \in E(G)\ \xi_{a,b} = (\text{none of our traces begin with a,b})\\
+	&\Pr\{\xi_{a,b}\} \leq \frac{1}{n^3} \text{ Thus:}\\
+	&\Pr\{\text{Our algorithm fails}\} =\Pr\{\bigcup_{\{a,b\}\in E(G)}^{} \xi_{a,b}\}\leq \sum\Pr\{\xi_{a,b}\} \leq n^2 \frac{1}{n^3} = \frac{1}{n}
+\end{align*}
+
+We can conclude the probability that our algorithm is correct is $1-\frac{1}{n}$. However if we increase the traces by a factor of $c$ we actually get\\ $\Pr\{failure\} = n^{2-3c}$. This algorithm thus gets pretty close to optimal as soon as the number of traces gets big enough. It can be shown that $\frac{n\Delta}{{ln}^2n}$ traces are not enough. Using all the trace one can reconstruct the graph with $O(\Delta^9ln(n))$ traces.
 \end{proof}
+
+\paragraph{Recap on random variables}
+\begin{align*}
+\text{Let } X = \sum_{i=0}^{n}x_i \text{ with }x_i \text{ random variables}\\
+\mathbb{E}[X] = \sum_{i=0}^{n} \mathbb{E}[x_i] \text{ by linearity of the expected value}\\
+\end{align*}
+
+E.g.:
+\begin{align*}
+	&\forall i \in [n] \text{ flip a fair coin }c_i \text{ we have}\\
+	&x_i = \begin{cases}
+		1 \iff c_i \text{ is heads}\\
+		0 \text{ otherwise}
+	\end{cases}\\
+	&\Pr( X = k) = {n \choose k}2^{-n}\\
+\end{align*}
+
+If our coins are not fair we have of course:
+\begin{align*}
+&\Pr\{c_i = \text{Heads}\} = p\\
+&\Pr\{X = k \} = {n \choose k}p^{k}(1-p)^{n-k}\\
+\end{align*}
+
+\paragraph{Chernoff Bound}
+If $\{x_i\}_{i=0}^{n}$ are all mutually independent variables and $0\leq x \leq 1 \forall i$ and we define $X = \sum_{i=1}^{n} x_i$ . We can define the following bounds:
+\begin{align*}
+&\Pr\{x > (1+\epsilon) \mathbb{E}[X]\} \leq \exp({-\epsilon}^{-2} \frac{\mathbb{E}[X]}{3}) \\
+&\Pr\{x < (1+\epsilon) \mathbb{E}[X]\} \leq \exp({-\epsilon}^{-2} \frac{\mathbb{E}[X]}{3}) \\
+\end{align*}
+E.g.
+\begin{align*}
+&\forall i \in [n]\ \Pr\{x_i = 1\} = p  \implies \mathbb{E}[X] = pn\\
+&\Pr\{X > (1+\epsilon) \mathbb{E}[X]\} \leq \exp\left({-\epsilon}^{-2} \frac{pn}{3}\right),\, X = \sum_{i=1}^{n} x_i \\
+\end{align*}
+
+We do not prove that, thanks goodness.
+
+\paragraph{Chain letters} Chain letters are mails sent by a person which is then forwarded to other people who can add their in signature at the end of the letter.
+\begin{align*}
+&E = \text{\# exposed nodes} &\parbox{13em}{The nodes of the chain letter tree that have been exposed}\\
+&L = \text{\# leaves in the tree}&\parbox{13em}{The leaves of the clt}\\
+&N = \text{\# nodes in the tree}&\parbox{13em}{The nodes in the clt}\\
+\end{align*}
+
+We can guess the total number of nodes as \[\hat{N} = \frac{E}{\hat{\delta}} = \frac{E}{\left(\frac{E-L}{M-L}\right)} \]. Where $M$ is the number of nodes we suppose are in the graph. We now have a maximization problem.
+
+\begin{align*}
+&G = (V, E)\\
+&\forall v \in V,\, S(v) = \text{Neighbourhood}(v)\\
+&\mathscr{S} = \{S_v, \dots ,S_{v_n} \}\ \text{set of all close neighbourhood sets}\\
+\end{align*}
+
+Given $k\geq 1$ find $\mathscr{S}_k \subset \mathscr{S},\, |\mathscr{S}_k| = k$ such that $|\bigcup\limits_{\mathscr{S}\in \mathscr{S}_k} S|$ is maximized.
+
+\begin{algorithm}[H]
+	\caption{Greedy-Cover(neighbourhood set: $\mathscr{S}$, int: k) }
+	\label{alg:greedy-cover}
+	\begin{algorithmic}
+		\STATE $X_0 \leftarrow \emptyset$
+		\FOR{$i$ in range(k)}
+			\STATE pick a $S \in \mathscr{S}$ s.t. $|X_{i-1} \cup S|$ is maximized
+			\STATE $X_i = X_{i-1} \cup S$
+		\ENDFOR
+		\RETURN $X_k$
+	\end{algorithmic}
+\end{algorithm}
+
+\newtheorem{greedycover}{Greedy Cover Bound}
+
+\begin{greedycover}
+	We call  $opt$ the value of the optimal solution,\\ $t_i = |x_i|$ the cardinality of the current solution at the step $i$. We call $g_i = opt - t_i$ the gain at step $i$. \\We can then state that: 
+	\[
+		t_k \geq \left(1-\frac{1}{e}\right)opt \iff g_k \leq \frac{1}{e}opt
+	\]
+	
+	With $t_k$ the value returned by the algorithm.\\
+	We will prove that the greedy cover algorithm returns a $\geq 1-\frac{1}{e}$ approximation of the problem.  $\left(1-\frac{1}{e} \approx 0.63\right)$. 
+\end{greedycover}
+
+\begin{proof}
+	We define $n_i = |S_i \setminus X_{i-1}|$.
+	\paragraph{Lemma 1} $n_{i+1} \geq \frac{g_i}{k}$ The elements that have 
+	\begin{align*}
+	&T \subset O^* &T_i = O^* \setminus X_i\\
+	&S_1^*, \dots ,S_k^*&\parbox{15em}{sets chosen by the optimal solution}\\
+	&\text{We always have that }&T\subseteq \bigcup_{i=1}^{k}S_i^*\\
+	&\exists\ i\ \text{s.t. }|S_i^* \cap T| \geq \frac{|T|}{k}& \text{by contradiction } \forall\ i\ |S_i^* \cap T| \leq \frac{|T|}{k}\\
+	\end{align*}
+\end{proof}
+
 
 \section{16-10-17}
 Preferential attachment model: in this evolutionary model nodes get added one by one in the graph. The model starts with one node with an edge to itself. Whenever a node is added it will choose a neighbour in a ``rich-get-richer'' fashion. The probability that a node will be chosen as the neighbour for a new node is equal to \[\Pr\left\{\text{The new node will attach to }v_i\right\} = \frac{Deg(v_i)}{|E|}\]. We claim that the distribution of the degrees of the nodes will follow a power law.\\
@@ -160,10 +280,479 @@ Now that we're proved the base cases we can go for the general case:
 \endgroup
 \end{proof}
 
+\section{19-10-17}
+The core of a graph is ???.%FIX PLS
+
+\paragraph{Small world phenomenon}
+In the 60s Milgram wanted to prove that for any pair of people A, B there existed a chain of acquaintances that connected A to B. He selected a 1000 random people in Boston and asked them to send a letter to an unknown person in NY by only being allowed to send the letter to a person whom they knew. Milgram found that the average length of the chains was $\leq 6$. Kleinberg wanted to find a model that could explain this phenomenon.\\
+He supposed that each person lived in a point of a grid.
+\[
+\begin{Bmatrix}
+\cdot & \cdot &\cdot &\cdot &\cdot\\
+\cdot & \cdot &\cdot &\cdot &\cdot\\
+\cdot & p_{i,j} &\cdot &\cdot &\cdot\\
+\cdot & \cdot &\cdot &\cdot &\cdot\\
+\cdot & \cdot &\cdot &\cdot &\cdot\\
+\end{Bmatrix}\]
+
+\begin{align*}
+	V &=\{(i,j) | 1\leq i,j\leq n\}\\
+\end{align*}
+\begin{align*}
+	\forall (i, j) \in V & ((i,j), ((i+1),j)) \in E\\
+						 & ((i,j), (i,(j+1))) \in E\\
+						 & ((i,j), (i,(j-1)) \in E\\
+						 & ((i,j), ((i-1),j)) \in E\\
+\end{align*}
+
+\begin{align*}
+\text{Each} (i,j) \in V \text{ has one long-range link}\\
+\Pr\{(i,j)\rightsquigarrow (k,l)\} &\approx (|i-k|+|j-l|)^{-2}\\
+&= l_m((i-k),(j-l))^{-2}
+\end{align*}
+
+We can express this as:
+\[
+\Pr\{u \rightsquigarrow v\} = \frac{d(u,v)^{-2}}{\sum_{z\neq u}^{}d(u,z)^{-2}}
+\]
+
+\begin{algorithm}[H]
+	\caption{Geo-Greedy(node: v, node: t, message: M) }
+	\label{alg:geo-greedy}
+	\begin{algorithmic}
+		\IF{$v \neq t$}
+			\STATE $w\in Neighbours(v)$ that has the smallest $l_m$-distance to t (breaking ties arbitrarily)
+			\STATE $v$ forwards (M, t) to w
+		\ENDIF
+	\end{algorithmic}
+\end{algorithm}
+
+\newtheorem{GeoGreedy}{Geo-Greedy Bound}
+\begin{GeoGreedy}
+	GeoGreedy will make and expected number of steps, to go from any s to t, of $O({log}^2n)$
+\end{GeoGreedy}
+
+\begin{proof}
+		We call the nodes that are at distance $r$ from $u$:
+	\begin{align*}
+	S^{(r)}_u &= \{z | d(z,u) = r\}\\
+	&\leq \{(i+k, j+r+k) | 0\leq k \leq r \} \cup\\ 
+	&\leq \{(i+k, j-r+k) | 0\leq k \leq r \} \cup\\ 
+	&\leq \{(i-k, j-r+k) | 0\leq k \leq r \} \cup\\ 
+	&\leq \{(i-k, j+r+k) | 0\leq k \leq r \}\\ 
+	|S^{(r)}_u| &= 4(r+1) - \underbrace{4}_{\text{double corners count}} = 4r
+	\end{align*}
+	
+	\paragraph{Lemma 1} 
+	\begin{align*}
+	|S^{(r)}_u| &\leq 4r &\forall r \geq 1\\
+	|S^{(r)}_u| &\geq r  &\forall r \leq \frac{n}{2}
+	\end{align*}
+	
+	\begin{align*}
+		\sum_{z\neq u}^{}d(u,z)^{-2} &=\\
+		&= \sum_{i\geq 1}^{2n-2}\left( i^{-2} \cdot \overbrace{ | \{z | d(z, u) = i\}| }  \right)\\
+		&= \sum_{i\geq 1}^{2n-2}\left( i^{-2} 4i \right) = 4\sum_{i\geq 1}^{2n-2}\left( \frac{1}{i}  \right)\\
+		&\leq 4(1+\ln(2n-1)) \leq 4(1+\ln(2n)) = 4\ln(2en) < 4\ln(6n)
+	\end{align*}
+	
+	\paragraph{Lemma 2} From that previous upper bound we can rewrite the original squiggly probability as:
+	\[
+	\Pr\{u \rightsquigarrow v\} = \frac{d(u,v)^{-2}}{4ln(6n)}
+	\]
+	
+	Geo-greedy is in phase j if its current node c satisfies $2< d(c,t) \leq 2^{j+1}$. Let's define $x_i =$\# number of steps that we spend in phase j. We want to prove that:
+	\[
+		\text{\# of steps} = \sum_{j=0}^{1+\ln(n)} x_j  
+	\] 
+	
+	\paragraph{Lemma 3} Let's define what a bowl is in lattice space:
+	\begin{align*}
+	B_u^{(r)} &= \{v | d(u,v) \leq r\},\ r\leq 2n - 2\\
+	|B_u^{(r)}| &\geq |B_u^{(\lceil \frac{r}{4} \rceil)}| = \sum_{i=0}^{\lceil \frac{r}{4} \rceil} |S^{(i)}_u| = 1 + \sum_{i=1}^{\lceil \frac{r}{4} \rceil}i = 1 + \frac{\lceil \frac{r}{4} \rceil(\lceil \frac{r}{4} \rceil +1)}{2} \geq \frac{r^2}{32}
+	\end{align*}
+	
+	Phase j
+	\begin{align*}
+ 	x \in B_t^{(2^j)}\\
+	d(c, x) &\leq d(c, t) + d(t, x) \\
+	&\leq 2^{j+1} + d(t,x) \leq 2^{j+1} + 2^j \leq 2^{j+2}
+\end{align*}
+	\begin{align*}
+	\Pr\{c \rightsquigarrow x\} \geq \frac{d(c,x)^{-2}}{4\ln(6n)} \geq \frac{2^{-2j-4-2}}{\ln(6n)} = \frac{2^{-2j-6}}{\ln(6n)}\\
+	\Pr\{\exists x \in B_t^{(2^j)} c \rightsquigarrow x\} &= \sum_{ x \in B_t^{(2^j)}}^{}\Pr\{c \rightsquigarrow x\}\\
+	&\geq \sum_{ x \in B_t^{(2^j)}}^{} \frac{2^{-2j-6}}{\ln(6n)} = \frac{(2^j)^2}{32} \frac{2^{-2j-6}}{\ln(6n)} \\
+	&= \frac{2^{2j-5-2j-6}}{\ln(6n)} = \frac{2^{-11}}{\ln(6n)} = \frac{1}{2048\ln(6n)}
+	\end{align*}
+	
+	We can now finally compute the expected value of the number of nodes in the chain to get from node s to t.
+	
+	\begin{align*}
+		\mathbb{E}[x_j] = \sum_{i=1}^{\infty} \Pr \{x_j \geq i \} &\leq \sum_{i=1}^{\infty} \left(1- \frac{1}{2048\ln(6n)} \right)^{i-1}\\ 
+		&= \sum_{i=0}^{\infty} \left(1- \frac{1}{2048\ln(6n)} \right)^{i} = 2048\ln(6n)\\
+		&\textit{Since}\ \sum_{i=0}^{\infty} (1-x) = \frac{1}{x},\ 0<x<1
+	\end{align*}
+	
+\end{proof}
+
+\section{Densest subgraph}
+
+\begin{align*}
+&\text{let } G= (V,E) \text{be an undirected graph}\\
+&\text{We want to find } S \subseteq V \text{ that maximizes } f(S) = \frac{|E(S)|}{|S|}\\
+&E(S) = \{ \{i, j\} | \{i, j\} \in E, \{i, j\} \subseteq S \}
+\end{align*}
+
+That is we want to find the subgraph where the ratio of the number of edges to the number of nodes is highest. We're interested in this problem to find communities. We can find the optimal solution to this problem in polynomial time using linear programming.
+
+\paragraph{Linear programming}
+Suppose you're a farmer with an $L\ km^2$ field and an amount $F\ kg$ of fertilizer. You want to maximize your profit. We call:
+\begin{align*}
+&S_p = \text{selling price of potatoes per square kilometer}\\
+&S_b = \text{selling price of barley per square kilometer}\\
+&F_p = \text{kg of fertilizer per square kilometer of potatoes}\\
+&F_b = \text{kg of fertilizer per square kilometer of barley}\\
+\end{align*}
+
+You also have a limited amount of fertilizer. You want to maximize the function:
+
+\begin{align*}
+	&\text{max: } S_p x_p + S_b x_b\\
+	&\begin{cases}
+	x_p + x_b \leq L\\
+	F_p x_p + F_b x_b \leq F
+	\end{cases}
+\end{align*}
+
+We can solve this geometrically or analytically.
+
+A general primal LP problem is expressed in the form:
+
+\begin{align*}
+	&\bar{x} = \begin{pmatrix}
+	x_1\\
+	\dots \\
+	x_n
+	\end{pmatrix}\\
+	&\begin{cases}
+	\text{max: } \bar{c}^T \bar{x}\\
+	A \bar{x} \leq \bar{b}^T\\
+	\bar{x} \geq 0
+	\end{cases}\\
+	&A \in \mathscr(Q)^{m\times n},\, \bar{b} \in \mathscr(Q)^{m},\, \bar{c} \in \mathscr(Q)^{n}\\
+\end{align*}
+
+Its dual is in the form:
+
+\begin{align*}
+&\begin{cases}
+\text{min: } \bar{b}^T \bar{y}\\
+\bar{y}^T A \geq \bar{c}\\
+\bar{y} \geq 0
+\end{cases}\\
+\end{align*}
+
+The weak duality theorem states that $opt(\text{primal}) \leq opt(\text{dual})$ if they are both feasible. The strong duality states that if the optimal solution exist then $opt(\text{primal}) = opt(\text{dual})$
+
+We can hope to find an algorithm that runs in $O\left(\left(n\cdot m \cdot \log |A|_\infty \right)^c\right)$ which is polynomial time. With $\log |A|_\infty $ being the max number of bits needed to represent each number.
+
+\paragraph{k-Max-Cover LP}
+We can express the k-max-cover problem as a LP problem. 
+
+\begin{align*}
+&m \text{ sets }\ S_1,\dots,S_m\ \subseteq [n]\\
+&\text{max: } \sum y_j\\
+&\begin{cases}
+\sum_{i=1}^{m} x_i \leq k\\
+y_j \leq \sum_{i: j\in S_i}^{} x_i \\
+\end{cases}\\
+&0 \leq x_i,\, y_j \leq 1
+\end{align*}
+
+We introduce one variable $x_i$ for each set $S_i$ and one variable $y_j$ for each $j \in [n]$
+
+\newtheorem{linearmaxcover}{LP max-cover}
+
+\begin{linearmaxcover}
+	We state that:
+	\[
+	\left(1-\frac{1}{e}\right) opt_{LP} \leq opt_{ML} \leq opt_{LP}
+	\]
+\end{linearmaxcover}
+
+\begin{proof}
+	Ipse dixit
+\end{proof}
+
+\paragraph{Densest Subgraph LP}
+\begin{align*}
+	&G=(V,E)\\
+	&\text{max: } f(S) = \frac{|E(S)|}{|S|}\\
+	&S\subseteq V,\, E(S) = \{ \{i, j\} | \{i, j\} \in E, \{i, j\} \subseteq S \}\\
+	&\begin{cases}
+	\text{max: } \sum_{\{i, j\} \in E}^{} x_{\{i, j\}}\\
+	x_{\{i, j\}} \leq y_i\ \text{i pick one edge only once}\\
+	x_{\{i, j\}} \leq y_j\ \text{i pick one edge only once}\\
+	\sum_{i = 1}^{n} y_i \leq 1\\
+	x_{\{i, j\}}, y_i \geq 0\\
+	\end{cases}
+\end{align*}
+
+\paragraph{Lemma 1} $\forall S\subseteq V,\, opt_{LP} \geq f(S)$
+\begin{proof}
+	\begin{align*}
+		&y_i = \frac{1}{|S|},\, i \in S\\
+		&y_i = 0,\, i \notin S\\
+		&x_{\{i, j\}} = \frac{1}{|S|},\, \{i, j\} \subseteq S\\
+		&x_{\{i, j\}} = 0,\, \{i, j\} \nsubseteq S\\
+	\end{align*}
+	
+	\begin{align*}
+		&\sum y_i = |S|\frac{1}{|S|} = 1\\
+	\end{align*}
+	
+	\begin{align*}
+		&\{i, j\} \in E\\
+		&-\ \{i, j\} \nsubseteq S\\
+		&\begin{cases}
+		x_{\{i, j\}} \leq y_i\\
+		\{i, j\} \leq y_j
+		\end{cases} \iff \overbrace{{\{i, j\}}}^{=0} \leq \overbrace{min(y_i, y_j)}^{=0}\\
+	&-\ \{i, j\} \subseteq S\\
+	&\frac{1}{|S|} = x_{\{i, j\}} \leq min(y_i, y_j) = \frac{1}{|S|}\\
+	\end{align*}
+	
+	So our problem is feasible
+	
+	\begin{align*}
+	&\sum x_{\{i, j\}} = |E(S)| \frac{1}{|S|} = f(S)\\
+	\end{align*}
+\end{proof}
+
+	Now we want to prove the other verse of the bound:
+	
+	\paragraph{Lemma 2}
+	\begin{align*}
+	&\text{Let } \{x_{\{i, j\}}, y_i\}\text{ be an optimal solution to our LP, with value } v\\
+	&\text{we can claim that:}\\ 
+	& \exists S \subseteq V,\, f(S) \geq v\\
+	\end{align*}
+	
+	We assume that:
+	\[
+	\forall \{i, j\} \in E,\ x_{\{i, j\}} = min(y_i, y_j)
+	\]
+	\begin{proof}
+
+	By contradiction assume that:
+	\[
+	\exists \{i, j\} \in E,\ x_{\{i, j\}} < min(y_i, y_j)
+	\]
+	Then it means our algorithm is not finished since we could have taken another step to further increase the current value of our solution.
+		
+	\end{proof}
+
+	\begin{align*}
+	&\text{Let } S(r) = \{i\ |\ y_i \geq r\}\\
+	&E(r) = \{\{i, j\}\ |\ x_{\{i, j\}} \geq r \}\\
+	\end{align*}
+	
+	We claim that: 
+	\begin{align*}
+	&\forall O \leq r \leq max\{y_i\}\\
+	&\forall \{i, j\} \in E,\ \{i, j\} \in E(r) \iff \{i, j \} \subseteq S(r)\\
+	\end{align*}
+	
+	\begin{align*}
+	&\{i, j\} \in E(r),\ \implies  x_{\{i, j\}} \geq r\\
+	&min(y_i, y_j) =  x_{\{i, j\}} \geq r\\
+	&y_i \geq r\ \wedge\ y_j \geq r\\
+	& i,j \in S(r)
+	\end{align*}
+	
+	\begin{align*}
+	&\{i, j\} \subseteq S(r)\\
+	&r\leq  x_{\{i, j\}} = min(y_i, y_j)\\
+	&\{i, j\} \in E(r)\\
+	\end{align*}
+	
+	\begin{align*}
+	\int_{0}^{max\{y_i\}}|S(r)|\ dr &= \sum_{i=1}^{n} \int_{0}^{max\{y_i\}} [r\leq y_i]\ dr\\
+								  &= \sum_{i=1}^{n} \int_{0}^{y_i} 1\ dr\\
+								  &= \sum_{i=1}^{n} y_i\\
+	\end{align*}
+	
+	\begin{align*}
+	\int_{0}^{max\{y_i\}} |E(r)|\ dr &= \sum_{\{i, j\} \in E} \int_{0}^{max\{y_i\}} [r\leq x_{\{i, j\}}]\ dr\\
+								   &= \sum_{i=1}^{n} \int_{0}^{x_{\{i, j\}}} 1\ dr\\
+								   &= \sum_{i=1}^{n} x_{\{i, j\}}\\
+	\end{align*}
+	
+	So:
+	
+	\begin{align*}
+	&\int_{0}^{max\{y_i\}}|S(r)|\ dr = \sum_{i=1}^{n} y_i\\
+	&\int_{0}^{max\{y_i\}} |E(r)|\ dr = \sum_{i=1}^{n} x_{\{i, j\}}\\
+	\end{align*}
+	
+	My final claim is:
+	\[
+	\exists r \in [0, max\{y_i\}]\quad |E(r)| \geq v\cdot|S(r)|
+	\]
+	
+	\begin{proof}
+		
+
+	\begin{align*}
+	&\text{By contradiction }\forall r \in [0, max\{y_i\}]\ |E(r)| < v\cdot|S(r)|\\
+	&\int_{0}^{max\{y_i\}} |E(r)|\ dr < \int_{0}^{max\{y_i\}}|S(r)|\ dr = v \underbrace{\sum_{i=1}^{n} y_i}_{=1} = v\\
+	& \text{But the above equation is also equal to: } \sum_{\{i, j\} \in E} x_{\{i, j\}} = v \Longrightarrow\!\Longleftarrow
+	\end{align*}
+	\end{proof}
+
+\section{\today}
+
+\paragraph{Densest subgraph problem} Finding the densest subgraph of $G=(V,E)$ is defined as finding that set of nodes $S$ such that 
+
+\[
+\delta (S) = \frac{|E(S)|}{|S|} \text{ is maximized}
+\]
+
+\begin{algorithm}[H]
+	\caption{Greedy-Subgraph( graph: G)}
+	\label{alg:sub-greedy}
+	\begin{algorithmic}
+		\STATE $S_0 \leftarrow V$
+		\FOR{$i=0$ to $|V-1|$}
+		\STATE let $w_i \in S_i$ be a node of min degree in $G\ |\ S_i$
+		\STATE $S_{i+1} \leftarrow S_i - \{w_i\}$
+		\ENDFOR
+		\RETURN the $S_i$ that maximizes $\delta(S_i)$
+	\end{algorithmic}
+\end{algorithm}
+
+\newtheorem{subgraphbound}{Greedy subgraph is a 2 approx to DSG}
+
+\begin{subgraphbound}
+The solution returned by greedy-subgraph is a 2-approximation to the DSG.
+\end{subgraphbound}
+
+\begin{proof}
+	\begin{align*}
+	&G=(V,E) \rightarrow D(V,A) \text{orientation of G}\\
+	&\forall \{v, w\} \in E \implies |\{(v, w), (w, v)\}\cap A| = 1\\
+	&\forall (v, w) \in A \implies \{v, w\}\in E\\
+	\end{align*}
+	
+	Claim: If $D(V,A)$ is an orientation of $G=(V,E)$ and $d_M$ is the maximum in-degree of $D(V,A)$ then $\forall S \subseteq V: \delta(S) \leq d_M$
+	
+	\begin{align*}
+		&\delta (S) = \frac{|E(S)|}{|S|}\\
+		&|E(S)| \leq \sum_{v\in S}^{} indeg_D(v) \leq \sum_{v\in S}^{} d_M = |S| d_M\\
+		&\delta (S) = \frac{|E(S)|}{|S|} \leq d_M\\
+	\end{align*}
+	
+	We build the orientation as the algorithm proceeds. When we remove a node we orient all the edges that were connected to that node towards it. 
+	
+	Let $D(V,A)$ be the resulting orientation of $G(V,E)$
+	\begin{align*}
+	&\forall i=0,\dots, |V|-1\\
+	&{indeg}_D(w_i) = {deg}_{S_i}(w_i) = {min}_{v\in S_i} deg_{S_i}(v) \leq {avg}_{v \in S_i} deg_{S_i}(v)\\
+	&= \frac{\sum_{v \in S_i}^{} deg_{S_i}(v)}{|S_i|} =  \frac{2|E(S_i)|}{|S_i|} = 2\delta(S_i)
+	\end{align*}
+	
+	Let $ i^* $  be and index maximizing $ indeg(w_i^*) $\\
+	If $ S^* $ is the optimal solution then:
+	\begin{align*}
+	&\delta(S^*) \leq indeg(w_i^*) \leq 2\delta(S_{i^*}) \\
+	&\delta(S_{i^*}) \geq \frac{1}{2} \delta(S^*) 
+	\end{align*}
+
+\end{proof}
+
+\begin{algorithm}[H]
+	\caption{Parallel-Greedy-Subgraph( graph: G)}
+	\label{alg:par-sub-greedy}
+	\begin{algorithmic}
+		\STATE $S_0 \leftarrow V$
+		\FOR{$i=0$ to $|V-1|$}
+		\STATE let $w_i \in S_i$ be a node of having at most $ (1+\epsilon^+) $avg degree in $G\ |\ S_i$
+		\STATE $S_{i+1} \leftarrow S_i - \{w_i\}$
+		\ENDFOR
+		\RETURN the $S_i$ that maximizes $\delta(S_i)$
+	\end{algorithmic}
+\end{algorithm}
+
+This algorithm can be parallelized
+\begin{algorithm}[H]
+	\caption{Quick-Greedy-Subgraph( graph: G)}
+	\label{alg:quick-sub-greedy}
+	\begin{algorithmic}
+		\STATE $S_0 \leftarrow V$
+		\STATE $ i\leftarrow 0 $
+		\WHILE{ $ S_i \neq \emptyset$}
+		\STATE $ A(S_i) \leftarrow \{v|v\in S_i \wedge deg_{S_i}(v) \leq (1+\epsilon)avg_{w\in S_i} deg_{S_i}(w) \} $
+		\STATE $ S_{i+1} \leftarrow S_i - A(S_i) $
+		\STATE $ i \leftarrow i+1 $
+		\ENDWHILE
+		\RETURN the $S_i$ that maximizes $\delta(S_i)$
+	\end{algorithmic}
+\end{algorithm}
+
+\newtheorem{quickgreedy}{Quick Greedy Bound}
+
+\begin{quickgreedy}
+	The quick greedy algorithm will return a $ (2+2\epsilon)-approx $ and it will run for $ O\left(\frac{1}{2}\log n\right) $ iterations
+\end{quickgreedy}
+
+\begin{proof}
+	Let $ S^* $ be an optimal solution. We claim that $ \forall v \in S^*,\ deg_{S^*}(v) \geq \delta(S^*) $. This means that we remove a node with degree less than the average we increase te average density.\\
+	
+	By contradiction:
+	
+	\begin{align*}
+		&\exists v \in S^*,\ deg_{S^*}(v) < \delta(S^*)\\
+		&\delta(S^* - \{v\}) = \frac{|E(S^* - \{v\})|}{|S^*| -1} =  \frac{|E(S^*)| - deg_{S^*}(v)}{|S^*| -1} > \frac{|E(S^*)| - \delta(S^*)}{|S^*| -1}=\\
+		&=\frac{|E(S^*)|}{|S^*|} \frac{|S^*|}{|S^*| -1} - \frac{\delta(S^*)}{|S^*| -1}=\\
+		&\delta(S^*)\left(\frac{|S^*|}{|S^*| -1} - \frac{1}{|S^*| -1}\right) = \delta(S^*)\quad \rightarrow\!\leftarrow
+	\end{align*}
+\end{proof}
+
+	Claim: $ |A(S_i)| \geq 1 $ if $ |S_i| \geq 1$
+	\begin{proof}
+
+	Let $ i^* $ be the first integer s.t. quick-greedy removes some element of the optimal solution $ S^* $ from $ S_{i^*} $ ( to get $ S_{i^* + 1} $)
+	
+	\begin{align*}
+	&|A(s_{i^*)} \cap S^* | \geq 1 \quad \left(\forall j < i^* |A(S_j) \cap S^*| = 0 \right)\\
+	&S_{i^*} \supseteq S^*
+ 	\end{align*}
+ 	
+ 	Let $ v $ be a node in $ A(S_i^*) - S^* $:\\
+ 	\begin{align*}
+ 		&\delta(S^*) \leq deg_{S^*}(v) \leq deg_{S_{i^*}}(v) \leq (1+\epsilon) avg_{w \in S_{i^*}} deg_{S_{i^*}}(w)=\\
+ 		&=(1+\epsilon) \frac{2|E(S_{i^*})|}{|S_{i^*}|} = (1+\epsilon) 2 \delta(S_{i^*})\\
+ 		& 2|E(S_{i^*}| = \sum_{v \in S_i}^{} deg_{S_i}(v) =\\
+ 		&\sum_{v \in A(S_i)}^{} deg_{S_i}(v) + \sum_{v \in S_i - A(S_i)}^{} deg_{S_i}(v)\geq\\
+ 		&\geq \sum_{v \in S_i - A(S_i)}^{} deg_{S_i}(v) > \sum_{v \in S_i - A(S_i)}^{} (1+\epsilon)\ avg_{w \in S_i}deg_{S_i}(v)\\
+ 		&=(1+\epsilon) |S_i - A(S_i)|  avg_{w \in S_i}deg_{S_i}(w) = |S_i - A(S_i)| \frac{2|E(S_{i})|}{|S_{i}|} (1+\epsilon)\\
+ 		&2|E(S_i)| > (1+\epsilon) |S_i - A(S_i)| \frac{2|E(S_{i})|}{|S_{i}|}\\
+ 		& \frac{1}{1+\epsilon} > \frac{|S_i| - |A(S_i)|}{|S_i|} = 1 - \frac{|A(S_i)|}{|S_i|}\\
+ 		&\frac{|A(S_i)|}{|S_i|} > 1 - \frac{1}{1+\epsilon} = \frac{1+\epsilon}{1+\epsilon} - \frac{1}{1+\epsilon} = \frac{\epsilon}{1+\epsilon} 
+ 	\end{align*}
+ 	
+ 	We now bound the number of operations:
+ 	\begin{align*}
+ 		&x\leq \frac{1}{2}\\
+ 		&\log(1+x) = \Theta(x)\\
+ 		& O\left(\log_{1+\frac{\epsilon}{1+\epsilon}} |V|\right) = \\
+ 		& O\left(\frac{\log |V|}{\log \left( 1+\frac{\epsilon}{1+\epsilon} \right)} \right) = O\left(\frac{\log |V|}{\frac{\epsilon}{1+\epsilon}} \right) =  O\left(\frac{\log |V|}{\epsilon} \right)
+ 	\end{align*}
+\end{proof}
 \section{TODO}
 
-Union Bound\\
-Oct 5th: Chernoff Bound, Chain Letter Petitions, Inference\\
+
+Oct 5th:  Chain Letter Petitions, Inference\\
 Oct 9th: Max-Cover, Submodular functions\\
 Oct 12th: Submodular optimization, Submodular Learning\\
 

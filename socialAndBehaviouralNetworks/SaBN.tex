@@ -5,6 +5,7 @@
 \usepackage{mathrsfs}
 \usepackage{algorithm}
 \usepackage{algorithmic}
+\usepackage{graphicx}
 
 \title{Social and Behavioural Networks}
 \author{}
@@ -437,7 +438,7 @@ A general primal LP problem is expressed in the form:
 	&\begin{cases}
 	\text{max: } \bar{c}^T \bar{x}\\
 	A \bar{x} \leq \bar{b}^T\\
-	\bar{x} \geq 0
+	\bar{x} \geq \bar{0}
 	\end{cases}\\
 	&A \in \mathscr(Q)^{m\times n},\, \bar{b} \in \mathscr(Q)^{m},\, \bar{c} \in \mathscr(Q)^{n}\\
 \end{align*}
@@ -448,7 +449,7 @@ Its dual is in the form:
 &\begin{cases}
 \text{min: } \bar{b}^T \bar{y}\\
 \bar{y}^T A \geq \bar{c}\\
-\bar{y} \geq 0
+\bar{y} \geq \bar{0}
 \end{cases}\\
 \end{align*}
 
@@ -610,7 +611,7 @@ We introduce one variable $x_i$ for each set $S_i$ and one variable $y_j$ for ea
 	\end{align*}
 	\end{proof}
 
-\section{\today}
+\section{26-10-17}
 
 \paragraph{Densest subgraph problem} Finding the densest subgraph of $G=(V,E)$ is defined as finding that set of nodes $S$ such that 
 
@@ -749,9 +750,408 @@ This algorithm can be parallelized
  		& O\left(\frac{\log |V|}{\log \left( 1+\frac{\epsilon}{1+\epsilon} \right)} \right) = O\left(\frac{\log |V|}{\frac{\epsilon}{1+\epsilon}} \right) =  O\left(\frac{\log |V|}{\epsilon} \right)
  	\end{align*}
 \end{proof}
+\section{30-10-17}
+
+Consider a space in which you have some points. You'd like to learn something about these points, such as determining clusters.
+
+Suppose we have a metric in our space. That is a function that respects:
+
+\begin{align*}
+& d: V \times V \rightarrow \mathbb{R},\ \forall x,y,z, \in V\\
+&1)\ d(x,y) \geq 0\\
+&2)\ d(x,y) = d(y,x)\\
+&3)\ d(x,x) = 0\\
+&4)\ d(x,y) \leq d(x,z) + d(z,y)\\
+\end{align*}
+
+The metrics we are used to are normal metrics:
+
+\begin{align*}
+&V = \mathbb{R}^D\\
+&d(\bar{x}, \bar{y}) = \sqrt{\sum_{i=1}^{D} \left(x_i - y_i\right)^2}\\
+\end{align*}
+
+But there are also LP metrics:
+
+\begin{align*}
+&V = \mathbb{R}^D\ p \geq 1\\
+&d(\bar{x}, \bar{y}) = {\left(\sum_{i=1}^{D} |x_i - y_i|^p\right)}^{\frac{1}{p}}\\
+\end{align*}
+
+
+Does there exist a subset of V ok cardinality k such that one can assign each $v \in V$ to some point $w(v)\in S$ so that $ d(v, w(v)) \leq r $. That is finding k-clusters of max radius r.
+
+Question: what is the maximum $ r $ that admits a k-clustering of $ (V,d) $.
+
+Let's overload the distance function to accept a set of points as second argument. We can define the distance between a point and the set as:
+\begin{align*}
+& d: V \times V \rightarrow \mathbb{R}\\
+&d(v,w)\ v, w \in V\\
+&S \subseteq V\\
+&d(v, S) = {min}\_{w \in S} d(v, w)\\
+\end{align*}
+
+Now we can present a greedy k-center algorithm. The algorithm start by picking a point at random. We then put 
+\begin{algorithm}[H]
+	\caption{Greedy-K-center( metric: (V,d), integer: k)}
+	\label{alg:k-center}
+	\begin{algorithmic}
+		\STATE $S \leftarrow \{x\}$ chosen at random, $ x \in V $
+		\WHILE{$ |S| < k  $}
+		\STATE let $ x \in V\setminus S $ be a point maximizing $ d(x, S) $
+		\STATE $ S \leftarrow S \cup \{x\} $
+		\ENDWHILE
+		\RETURN $ S $
+	\end{algorithmic}
+\end{algorithm}
+
+\newtheorem{kgreedybound}{K-center Greedy Bound}
+\begin{kgreedybound}
+	The Greedy K-center algorithm produces a 2 approximation
+\end{kgreedybound}
+
+\begin{proof}
+	Let $ S^* \subseteq V $ be an optimal solution $ \left(|S^* = k|\right)  $, having radius $ r^* $. Assign each $ y \in V $ to the cluster of one of the closest $ r^* \in S^* $. Let $ {\left\{ c \left( r_i^* \right) \right\}}_{r_i^* \in S^* }  $ be the resulting clustering.
+	Let $ S $ be the final greedy solution $ \left(|S = k|\right)  $.
+	
+	\paragraph{Lemma} $ \forall x \in S^*,\ \forall y,z \in C(x),\ d(y,z) \leq 2r^* $\\
+	$ d(y,z) \leq d(y,z) + d(z,x) \leq r^* + r^* = 2r^* $\\
+	
+	Suppose that $ \forall x \in S^*,\ C(x) \cap S \neq \emptyset $.\\
+	Pick $ y \in V $, and say that $ y\in C(x), \text{ for } x \in S^* $ this means that: $ \exists z \in C(x) \cap S $ such that $ d(y, S) \leq d(y, z) \leq 2r^*$ because z is inside S ($ z \in S $) and because of the Lemma.
+	
+	\paragraph{Voronoi diagrams} The $ C(x) \forall x \in V $ produce a neat partition of the space called a Voronoi diagram. Regarding our proof. Suppose that\\
+	$ \exists x \in S^*,\ C(x) \cap S = \emptyset $. By the pigeon hole principle $ \exists x' \in S^*\ |C(x') \cap S| \geq 2 $. Let $ y, y' \in C(x') \cap S,\ y\neq y' $. Suppose that $ y $ was added to S by k-greedy before $ y' $. Let $ S' $ be the set of points that k-greedy selected before $ y' $. That is $ S' = \underbrace{x_1, x_2, \dots , y, \dots}, y', \dots , x_k  $. Pick $ z \in V $. 
+	\begin{align*}
+	d(z, S) &\leq d(z, S')\ \text{Since } (S'\subseteq S)\\
+	&\leq d(y', S')\ \text{For how greedy picks points}\\
+	&\leq d(y', y)\ \text{Since } (y \in S')\\
+	&\leq 2r^*\ \text{By the Lemma }\\	
+	\end{align*}
+\end{proof}
+
+\newtheorem{kcenterhardness}{K-Center is NP hard}
+\begin{kcenterhardness}
+	Providing a $ (2 - \epsilon) $-approx to "k-center" is NP-hard.
+\end{kcenterhardness}
+\begin{proof}
+	By reduction to the dominating set problem. Which takes as an input $ G=(V,E),\ k $ and asks: does there exists a $ S \subseteq V,\ |V| = k$ such that $ \forall w \in V $ either $ w \in S $ or $ w $ has a neighbour in $ S $.\\\\
+	Consider a "K-center" instance of z.\\
+	We have k points of the metric.\\
+	Will ask for a radius $ r^* = 1 $ covering\\
+	$ d(v,w) = \begin{cases}
+	1&\left\{v,w\right\} \in E\\
+	2&\text{otherwise}\\
+	\end{cases}  $\\\\
+	Def: A $ (1,2) $-metric is a a $ (V,d) $ such that $ d(v,w) \in \left\{ 1,2 \right\} \forall \left\{v,w\right\} \in {v \choose 2}$ this implies that $ \underbrace{d(v,x)}_{1} + \underbrace{d(w,v)}_{1} \geq \underbrace{d(v,w)}_{2} $ This somewhy concludes the proof ???\\\\
+	Suppose that I you i only care about the euclidean spaces. And I relax the constraints on the initial point by letting you choose any point in the space as center for a cluster. This problem is harder than the previous one and our algorithm provides a worst approximation in this case. 
+\end{proof}
+
+\section{2-11-17}
+\paragraph{1-Centre problem} Given a metric $ (V,d) $ and a subset of point $ W \subseteq V $ find a k-center of radius 1. Generally we have.
+\begin{align*}
+&min\ &max\ &min\ &d(w, c) \leq \delta\\
+&c \in {V \choose k} &w \in W &c\in C
+\end{align*}
+
+So for the 1-centre problem. $ C^* = \{c^*\} \subseteq V,\ c^* \in V $\\
+\paragraph{Lemma} 
+
+\begin{align*}
+&max_{w \in W} d(w, c^*) &\geq max_{\{w_1w_2\} \in {W \choose 2}} \frac{d(w_1, w_2)}{2}\\
+&\frac{1}{2}(\underbrace{d(w_1, c^*)}_{\underbrace{\frac{1}{2}(max_{w \in W} d(w, c^*) + max_{w \in W} d(w, c^*))}_{max_{w \in W} d(w, c^*)}} + d(c^*, w_2) )&\geq d(w_1, w_2)\\
+\end{align*}
+
+Pick $ w in W $
+\begin{align*}
+&max_{w' \in W} d(w, w') \leq max_{\{w_1w_2\} \in {W \choose 2}} d(w_1, w_2) \leq 2max_{w' \in W} d(w', c^*)\\
+\end{align*}
+
+\paragraph{K-Median} $  min_{c \in {W \choose k}}  \sum\limits_{v \in V} min_{c \in C} d(v, c) \leq \frac{\delta}{|V|}$. K-median admits a $ 3+\epsilon $ approx. in time $n^{O(\frac{1}{2})}$
+
+\paragraph{1-Median} Consider the case where k = 1.
+\[
+\sum\limits_{w\in W} min_{c\in \{C^*\}} d(w, c) = \sum\limits_{w\in W} d(w, c^*) = Opt\\
+\]
+
+If $ w $ is chosen UAR from $ W $ then $ \mathbb{E}[\text{1-median cost of w}] \leq 2Opt $. 
+
+\begin{align*}
+\mathbb{E}[\text{1-median cost of w}] &= \frac{1}{|W|} \sum\limits_{w\in W} \sum\limits_{w' \in W} d(w, w') = \frac{2}{|W|} \sum\limits_{\{a,b\} \in {W\choose 2}} d(a,b)\\
+&\leq \frac{2}{|W|} \sum\limits_{\{a,b\} \in {W\choose 2}} \left(d(a,c^*) + d(c^*, b)\right)\\
+&= \frac{2}{|W|}(|W|-1) \underbrace{\sum\limits_{x \in W} (d(x,c^*)}_{} = \frac{2}{|W|}(|W| -1) Opt &\\
+&= \left(2 - \frac{2}{|W|}\right) Opt\\
+\end{align*}
+Is this bound tight? Apparently yes:
+\begin{align*}
+&\sum\limits_{w' \in W} (d(w',c^*) = |W|\\
+&\sum\limits_{w' \in W} (d(w, w') = 2(|W|-1)\\
+&\frac{2|W|-2}{|W|} = 2 - \frac{2}{|W|}
+\end{align*}
+
+This problem is polynomial in V if we consider the K-centre where we can only pick centres from our set of nodes. When we relax the constraint and say we can pick any point from our metric becomes NP-hard.\\
+We will prove that by reduction to 3-SAT. Consider n boolean variables and a formula
+\[ \zeta \subseteq {\{x_1, \dots , x_n, \bar{x_1}, \dots, \bar{x_n} \} \choose 3}\]
+Does there exists and assignment to the boolean variables that guarantees that $ \forall c \in \zeta $ at least one literal of c is true. We add as many nodes as the possible assignments to the clauses of our formula.
+
+\begin{proof}
+	\begin{align*}
+	&\zeta = \{c_1, \dots c_n\}&d(c_i, c_j) = 2\ \forall \{c_i,c_j\} \in {\zeta\choose 2}\\
+	&d(c_i, A_j) = \begin{cases}
+	1&\text{if }A_j\ SAT\ C_j\\
+	2&\text{otherwise} 
+	\end{cases}\\
+	&d(A_i, A_j) = 2 &\forall i, j
+	\end{align*}
+	
+	Suppose the formula is satisfiable. What is the best centre? \\
+	If the formula is satisfiable we pick the $ A_i $ that satisfies our formula and the 1-centre cost $ \leq m $ with m the number of nodes.\\
+	If the formula is not satisfiable then 1-centre cost $ \geq 2(m-1)$
+\end{proof}
+
+\paragraph{Correlation clustering}
+Consider a set $ V = \{w_1, \dots, v_n\} $ and a function $ f:V\times V \rightarrow \{1, -1\} $. The function spits out 1 if the nodes are similar, -1 otherwise. We want to partition V into clusters so to minimize the number of pairs of similar elements that are divided by the clustering plus the number of dissimilar elements that are not divided. That is we pay 1 if we divide two similar elements, and 1 if we put together two dissimilar elements. The unbounded version of this problem is easy. Just put every node in a different cluster.\\
+If the optimal solution has cost 0 we can look at the graph induced by the positive edges and return the connected components clusters.\\
+We use the function f to assign labels to the edges of the graph.
+\paragraph{Correlation clustering problem} Find a partition of $ V $ of minimum cost. We consider a case of the problem where each pair of nodes is comparable so the union of the positive and negative edges $ E^+ \cup E^- = {V \choose 2} $. Clearly the problem is NP-hard but we can show that it $ \exists $ a 3-approx to the CC-problem. Since the objective function for this problem is maximized at 0 we must show that if the optimal solution is 0 then the clustering can be computed in polynomial time. This is done by finding the connected components of the graph.
+
+
+\begin{algorithm}[H]
+	\caption{Greedy-Clustering(graph: G)}
+	\label{alg:g-clustering}
+	\begin{algorithmic}
+		\STATE $C \leftarrow \emptyset $
+		\WHILE{$ V \neq \emptyset  $}
+		\STATE pick $ v \in V $ U.A.R.
+		\STATE$ C \leftarrow \{v\} \cup \{w\ |\ w \in V \wedge \{v, w\}\in E^+ \}$
+		\STATE $C\ \cup\! = \{c\} $
+		\STATE $V \leftarrow V \setminus C  $
+		\ENDWHILE
+		\RETURN $ C $
+	\end{algorithmic}
+\end{algorithm}
+
+\newtheorem{clusterbound}{Greedy cluster bound}
+\begin{clusterbound}
+	$ \mathbb{E}[\text{cost of greedyCC}] \leq 3opt $
+\end{clusterbound}
+
+There are some cluster on which greedy cc performs really bad. Consider for example a star topology graph where all the edges to the star centre are positive and the rest are negative. Suppose we pick the star centre our cost becomes $ c = {(n-1) \choose 2} $. However we could've picked a point of the star and we would've had a cost of $ n-2 $. However we're still safe since the bad event happens with a very tiny probability if the star is large.
+
+\begin{proof}
+	Let Cost$^-_i $ = \# of negative edges inside the $ i $th cluster and\\
+	Cost$^+_i $ = \# of positive edges from cluster $ i $ to cluster $ j $ where $ j \geq i+1 $.\\ Finally we define Cost$_i $ = Cost$^+_i $ + Cost$^-_i $.
+	\paragraph{Lemma} $ \sum  $  Cost$_i $ = Cost.\\
+	\paragraph{Def} A bad triangle is a triple $ \{v_1, v_2, v_3 \} \in {V \choose 3}$. S.t. $ \mid {B \choose 2} \cap E^- \mid\ = 1$.
+	\paragraph{Lemma} Cost$_i $ = $ \mid\{ B \mid $  $ B $ is a bad triangle containing the $ i $th pivot and which are completely contained in the remaining graph, when the $ i $th pivot is chosen $ \}\mid $.  Consider again the case of the star. Every positive edge that goes from a leaf to outside the cluster would've been picked it there wasn't a negative edge going from the pivot to that node. So that's a bad triangle centred in the leaf. However as we showed before the probability of picking the star centre is very low so we can kill many bad triangles at once.
+	\paragraph{Corollary} The $ \mathbb{E} [\text{cost of greedycc}] = \mathbb{E}[$\# of bad triangles hit by a pivot when they are still completely in the graph$] = \sum\limits_{T \in \beta}\Pr\{T \text{is Hit}\} = 3\sum\limits_{T \in \beta} q_T$. A bad triangle is completely in the graph if it's still in the graph when we removed some nodes for an iteration.\\
+	If $ \{a, b, c\} $ is a bad triangle, let $ T_{ab,c} $ be the event that $ c $ is chosen as pivot while $ \{a, b, c\} $ are still all part of the graph. So if \[
+	p_{ab,c} = \Pr\{T_{ab,c}\}\; p_{ab,c}=p_{ac,b}=p_{bc,a} \equiv q_{abc}\ \Pr\{\{abc\} \text{is Hit}\} = 3q_{abc}\]. We will now provide a linear relaxation of CC.
+	\[
+	LP = 
+	\begin{cases}
+	min \sum_{\{v, v'\}\in {V\choose 2}}^{} x_{\{v, v'\}}\\
+	x_{\{v, v'\}} + x_{\{v', v''\}} + x_{\{v, v''\}} \geq 1 \forall \{v, v', v''\}\in \beta \\
+	0 \leq x_{\{v, v'\}}	
+	\end{cases}
+	\]
+	
+	Let us now think of the optimal solution. LP$ ^* \leq $OPT
+	\[	x_{\{v, v'\}} = 
+	\begin{cases}
+	1&\text{if } \{v, v'\} \text{has cost of 1 in OPT}\\
+	0&\text{otherwise}
+	\end{cases}
+	\]
+	
+	Recall that if we have LP problem then we got that DUAL$ ^* \leq$ LP$ ^* $ if LP is a minimization problem.
+	\[
+	LP = 
+		\begin{cases}
+		min \sum_{\{v, v'\}\in {V\choose 2}}^{} x_{\{v, v'\}}\\
+		x_{\{v, v'\}} + x_{\{v', v''\}} + x_{\{v, v''\}} \geq 1 \forall \{v, v', v''\}\in \beta \\
+		0 \leq x_{\{v, v'\}}	
+	\end{cases}
+	\]
+	
+	We had that a general primal LP problem is expressed in the form:
+	
+	\begin{align*}
+	&\bar{x} = \begin{pmatrix}
+	x_1\\
+	\dots \\
+	x_n
+	\end{pmatrix}\\
+	&\begin{cases}
+	\text{max: } \bar{c}^T \bar{x}\\
+	A \bar{x} \leq \bar{b}^T\\
+	\bar{x} \geq \bar{0}
+	\end{cases}\\
+	&A \in \mathscr(Q)^{m\times n},\, \bar{b} \in \mathscr(Q)^{m},\, \bar{c} \in \mathscr(Q)^{n}\\
+	\end{align*}
+	
+	Its dual is in the form:
+	
+	\begin{align*}
+	&\begin{cases}
+	\text{min: } \bar{b}^T \bar{y}\\
+	\bar{y}^T A \geq \bar{c}\\
+	\bar{y} \geq \bar{0}
+	\end{cases}\\
+	\end{align*}
+	
+	So in our case we have
+	
+	\[
+	DUAL = 
+	\begin{cases}
+	max\ \sum\limits_{T\in \beta}y_T\\
+	\sum\limits_{\substack{T\in \beta\\T\supset \{v, v'\}}}y_T \leq 1\ &\forall \{v, v'\} \in {V \choose 2}\\
+	Y_T \geq 0 &\forall T\in\beta\\
+	\end{cases}
+	\]
+	
+	\begin{align*}
+	&\sum\limits_{\substack{T\in \beta\\T\supset \{v, v'\}}}q_T = \sum\limits_{\substack{v''\\\{v, v', v''\} \in \beta}} q_{\{v, v', v''\}} = \sum\limits_{\substack{v''\\\{v, v', v''\} \in \beta}} p_{vv', v''} = \sum\limits_{\substack{v''\\\{v, v', v''\} \in \beta}} \Pr\{T_{vv', v''}\} = 1
+	\end{align*}
+	
+	Since these events are all disjoints then the sum of their probabilities is 1. So we proved that
+	\[
+	\sum q_T \leq \text{DUAL}^* \leq \text{LP}^* \leq \text{OPT}
+	\] 
+	And thus $ \mathbb{E}[\text{greedycc}] \leq 3q_T $
+	
+\end{proof}
+
+\section{Markov Chains}
+A Markov chain is a sequence $ X_0, \dots,X_n $ of random variables on $ S $ generic state space, which satisfies:
+\begin{enumerate}
+	\item Memorylessness :\[ \Pr\{X_t = x \mid X_{t-1} = y,\dots, X_{0} = y_0\} = \Pr\{X_t = X \mid X_{t-1} = y \}\]
+	E.g. : the drunkard walk\\
+	Consider a drunkard wandering around 2 bars and their home. Let's say that they can be found at a finite set of points $ \mathbb{S} = \{0, 1, -1, 2, -2\} $. We give the distribution of probability for their position
+	\[
+	X_0 = \begin{cases}
+	0&pr = 1\\
+	1&pr = 0\\
+	2&pr = 0\\
+	-1&pr = 0\\
+	-2&pr = 0\\
+	\end{cases}
+	\]
+	
+	\[
+	\forall x,y \in \mathbb{S}\ \Pr\{X_t =x \mid X_{t-1} = y\} = \Pr_{xy}
+	\]
+	
+	For each possible transition I can have a different probability. This is given in a transition matrix $ P $.
+	
+	\[
+	P=
+	\left(
+	\begin{matrix}
+	0&1&0&0&0\\
+	\frac{1}{2}&0&\frac{1}{2}&0&0\\
+	0&\frac{1}{2}&0&0&0\\
+	0&\frac{1}{2}&0&\frac{1}{2}&0\\
+	0&0&0&1&0\\
+	\end{matrix}\right)
+	\]
+	
+	Now if i have the position $ X_0 $ given by putting a 1 in the probability of the position at which the drunkard is, I have:
+	$ \mathscr{F}_0 = (0, 0, 1, 0, 0) $. The probability vector at time $ t $ is then:
+	\begin{align}
+	&\mathscr{F}_t = \mathscr{F}_0 P^T
+	\end{align}
+	\item Hitting time: we call the hitting time the expected value of the time it takes the drunkard to reach a certain point, denoted by $ \mathscr{H}_x\left(T_{\Omega\subseteq \mathbb{S}}\right) $, that is the time it takes the drunkard to go from point $ X $ to a certain subset $ \Omega \subseteq \mathbb{S} $. Let's say the drunkard starts from point 0 and I want to know
+	\begin{align*}
+	\mathscr{H}_0 \left(T_{\{-2, 2\}}\right) &= \frac{1}{2}\left[\mathscr{H}_0 \left(T_{\{-2, 2\}}\right) + 1 \right] + \frac{1}{2}\left[\mathscr{H}_{-1} \left(T_{\{-2, 2\}}\right) + 1 \right]\\
+	\mathscr{H}_1 \left(T_{\{-2, 2\}}\right) &= \frac{1}{2}\left[\mathscr{H}_0 \left(T_{\{-2, 2\}}\right) \right] + \frac{1}{2}\left[\underbrace{\mathscr{H}_{2} \left(T_{\{-2, 2\}}\right)}_{0} + 1 \right]\\
+	\mathscr{H}_{-1} \left(T_{\{-2, 2\}}\right) &= \frac{1}{2}\left[\mathscr{H}_0 \left(T_{\{-2, 2\}}\right) + 1 \right] + \frac{1}{2}\\
+	\mathscr{H}_{0} \left(T_{\{-2, 2\}}\right) &= 4
+	\end{align*}
+	\item Return time: the expected time for a drunkard to return to the original point from where they started.
+	\item Convergence: if we start from any $ \mathscr{F}_0 $ can it be that we find \[
+	\mathscr{F}_0 P^1 \rightarrow \mathscr{F}_0 P^2 \rightarrow \dots \rightarrow \mathscr{F}_0 P^t \rightarrow \mathscr{K}
+	\]
+	such that $ \mathscr{K}P  = \mathscr{K} $  ?. This $ \mathscr{K} $ does not exists, unless we put two other constraints on the chain:
+	\begin{itemize}
+		\item irreducible $ \rightarrow $ connectivity : $ \forall x,y\ \exists\ t\ \Pr\{X_t = y \mid X_0 - X\} > 0 $
+		\item aperiodicity  $ \rightarrow gcd $ returnTimes = 1
+	\end{itemize}
+	Such a chain is called and Ergodic Markov Chain.
+\end{enumerate}
+
+\newtheorem{markov}{Ergodic Markov Chain}
+\begin{markov}
+	A Markov Chain is Ergodic $ \iff $ there is a unique stationary distribution
+\end{markov}
+\begin{proof}
+	Omitted
+\end{proof}
+
+\paragraph{Convergent Markov Chain} If I define \[\pi(X) = \frac{1}{\underbrace{\mathbb{E}_X\left(T_x^t\right)}_{\parbox{7em}{Time to start from X and return to t}}} \text{ then } \pi P = \pi \]
+\begin{proof}
+Fix some $ z \in \mathbb{S} $.
+\begin{align*}
+\tilde{\pi} &= \mathbb{E}\left[\text{number of times I visit } X \text{ before returning to } z \right]\\
+\tilde{\pi} &= \sum\limits_{t = 0}^{\infty} \Pr_z\{X_t = X, T_z^t > t\}\\
+\end{align*}
+I want to show that $ \tilde{\pi} P =  \tilde{\pi} $.
+
+\begin{align*}
+\sum\limits_{y \in \mathbb{S}} \sum\limits_{t = 0}^{\infty} &\Pr_z\{X_t = X, T_z^t > t\}\Pr\{x,y\}\\
+\sum\limits_{t = 0}^{\infty} &\Pr_z\{X_{t+1} = y, T_z^t > t\}\\
+\sum\limits_{t = 1}^{\infty} &\Pr_z\{X_{t} = y, T_z^t \geq t\} + \Pr_z\{X_{0} = y, T_z^t \geq 0\} - \sum\limits_{t = 1}^{\infty} \Pr\{X = y, T_z^t \geq y\} = \tilde{\pi}\\
+\end{align*}
+\end{proof}
+
+Then the return time to x can be defined as $ \sum\limits_{x \in \mathbb{S}} \tilde{\pi}(x) $. And so \[\pi(X) = \frac{\tilde{\pi}(x)}{\sum\limits_{x \in \mathbb{S}} \tilde{\pi}(x)} = \frac{1}{\text{return time to X}}\]
+
+
+\section{Drunkard walk} Let $ G = (V, E) $ . At each node $ v\in V $ we define.
+\[
+P = \begin{cases}
+\frac{1}{2}&\text{probability to loop}\\
+\frac{1}{2deg(v)}&\text{go to one neighbour}
+\end{cases}
+\]
+\newtheorem{randomwalk}{Drunkard Walk Convergence}
+\begin{randomwalk}
+	For a simple random walk the stationary distribution is: \[
+	\pi(v) = \frac{deg(v)}{2|E|}
+	\]
+\end{randomwalk}
+\begin{proof}
+	\begin{align*}
+	\pi(x) &= \sum\limits_{u \in V} \pi(u)\Pr(u, v)\\
+	& = \sum\limits_{u \in N(v)} \frac{deg(u)}{2|E|} \frac{1}{2deg(u)} =\frac{deg(v)}{2|E|}
+	\end{align*}
+\end{proof}
+
+Now say I have a graph and i want to sample a vertex. Let's define the mixing time: \[d\left(X^t, \pi \right) \leq \frac{1}{4} \] where t is the smallest possible. So this mixing time decreases exponentially since \[ d\left(X^{tc}, \pi \right) \leq \Theta\left(\frac{1}{42^c}\right)\] We also have that:
+\[
+d(\pi_1, \pi_2) = \frac{1}{2}\sum\limits_{x \in \mathbb{S}}\mid \pi_1(x) - \pi_2(x) \mid
+\] that is the total variation distance.
+
+For a simple random walk I know that $ \rightarrow \pi \propto deg(v) $. I want distribution of equal weight to all the vertices, i.e., the uniform distribution.
+
+Sorry future me I have no idea what I'm writing.
+
+\begin{enumerate}
+	\item Run the simple random walk
+	\item Stop at $ t_{mix} $
+	\item Accept  with probability $\frac{1}{deg v} $ or throw it away and run the Markov Chain again
+\end{enumerate}
+
+On average the runtime of this algorithm is $ r = d_{avg} t_{mix} $. We modify the random walk probabilities to be:
+\[
+P = \begin{cases}
+1 - \frac{deg(v)}{2d_{max}}&\text{probability to loop}\\
+\frac{1}{2d_{max}}&\text{go to one neighbour}
+\end{cases}
+\]
+So the runtime is $ d_{max}t_{mix} $ but the average number of downloads is $ d_{avg}t_{mix} $
 \section{TODO}
-
-
 Oct 5th:  Chain Letter Petitions, Inference\\
 Oct 9th: Max-Cover, Submodular functions\\
 Oct 12th: Submodular optimization, Submodular Learning\\
